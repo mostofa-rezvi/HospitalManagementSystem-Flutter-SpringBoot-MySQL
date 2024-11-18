@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_project/auth/AuthService.dart';
 import 'package:flutter_project/model/AppointmentModel.dart';
 import 'package:flutter_project/model/UserModel.dart';
-import 'package:flutter_project/pages/common/Salary.dart';
 import 'package:flutter_project/pages/receptionist/AppointmentSuccessful.dart';
 import 'package:flutter_project/service/AppointmentService.dart';
 import 'package:provider/provider.dart';
@@ -14,18 +13,18 @@ class AppointmentCreatePage extends StatefulWidget {
 
 class _AppointmentCreatePageState extends State<AppointmentCreatePage> {
   AppointmentModel appointmentModel = AppointmentModel(
-    id: '',
+    id: null,
     name: '',
     email: '',
     phone: '',
     gender: '',
-    age: 0,
+    age: null,
     birthday: null,
     date: null,
     time: '',
     notes: '',
-    doctor: [],
-    requestedBy: [],
+    requestedBy: null,
+    doctor: null,
   );
 
   List<DateTime> availableDates = [];
@@ -92,17 +91,32 @@ class _AppointmentCreatePageState extends State<AppointmentCreatePage> {
       final user = await AuthService.getStoredUser();
 
       if (user != null) {
-        appointmentModel.requestedBy = [user]; // Assuming requestedBy is a list of UserModel
+        appointmentModel.requestedBy = user;
       }
 
       final appointmentService = Provider.of<AppointmentService>(context, listen: false);
       final response = await appointmentService.createAppointment(appointmentModel);
 
       if (response.successful) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Appointment created successfully')));
-        Navigator.pop(context); // Navigate back on success
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Congratulations! Appointment created successfully.'),
+            backgroundColor: Colors.green,
+          ),
+        );
+
+        // Navigate to a success page
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => AppointmentSuccessful()),
+        );
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(response.message ?? 'Failed to create appointment')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(response.message ?? 'Failed to create appointment'),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     }
   }
@@ -198,7 +212,7 @@ class _AppointmentCreatePageState extends State<AppointmentCreatePage> {
                             const SizedBox(height: 10),
                             TextFormField(
                               decoration: InputDecoration(labelText: 'Age', border: OutlineInputBorder()),
-                              onSaved: (value) => appointmentModel.age = int.tryParse(value ?? '0') ?? 0,
+                              onSaved: (value) => appointmentModel.age = value,
                               validator: (value) {
                                 if (value!.isEmpty) return 'Please enter your age';
                                 if (int.tryParse(value) == null) return 'Age must be a number';
@@ -237,28 +251,11 @@ class _AppointmentCreatePageState extends State<AppointmentCreatePage> {
                               maxLines: 3,
                             ),
                             const SizedBox(height: 20),
-                            // ElevatedButton(
-                            //   style: ElevatedButton.styleFrom(
-                            //     padding: EdgeInsets.symmetric(horizontal: 40, vertical: 15),
-                            //   ),
-                            //   onPressed: createAppointment,
-                            //   child: Row(
-                            //     mainAxisSize: MainAxisSize.min,
-                            //     children: [
-                            //       Text('Submit Appointment', style: TextStyle(fontSize: 16)),
-                            //       const SizedBox(width: 8),
-                            //       Icon(Icons.send, size: 24),
-                            //     ],
-                            //   ),
-                            // ),
-
                             ElevatedButton(
                               style: ElevatedButton.styleFrom(
                                 padding: EdgeInsets.symmetric(horizontal: 40, vertical: 15),
                               ),
-                              onPressed: () async {
-                                await appointment(context);  // Call the Future-based navigation method
-                              },
+                              onPressed: createAppointment, // Call the createAppointment method
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
@@ -268,7 +265,6 @@ class _AppointmentCreatePageState extends State<AppointmentCreatePage> {
                                 ],
                               ),
                             ),
-
                           ],
                         ),
                       ),
@@ -281,18 +277,4 @@ class _AppointmentCreatePageState extends State<AppointmentCreatePage> {
       ),
     );
   }
-
-  // Method to handle the creation of appointment
-  Future<void> appointment(BuildContext context) async {
-      // You can perform some async operation here (e.g., API call)
-      await Future.delayed(Duration(seconds: 3)); // Simulating an async operation (like an API request)
-
-      // After the async operation completes, navigate to AppointmentSuccessful page
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => AppointmentSuccessful()),
-      );
-
-  }
-
 }
